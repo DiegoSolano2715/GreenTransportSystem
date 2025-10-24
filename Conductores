@@ -1,0 +1,21 @@
+/*CREATE DATABASE GreenTransportDB;
+GO*/
+USE GreenTransportDB;
+GO
+
+-- Tabla de Conductores
+CREATE TABLE Conductores (
+    IdConductor INT IDENTITY PRIMARY KEY,
+    Nombre NVARCHAR(100),
+    Licencia NVARCHAR(20),
+    FechaIngreso DATE
+);
+GO
+
+-- Conductores
+INSERT INTO Conductores (Nombre, Licencia, FechaIngreso)
+VALUES
+('Carlos Rojas', 'CR12345', '2020-05-12'),
+('Ana Gómez', 'AG67890', '2021-09-10'),
+('Luis Fernández', 'LF54321', '2019-03-02');
+GO

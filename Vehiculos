@@ -1,0 +1,25 @@
+CREATE DATABASE GreenTransportDB;
+GO
+USE GreenTransportDB;
+GO
+
+-- Tabla de Vehículos
+CREATE TABLE Vehiculos (
+    IdVehiculo INT IDENTITY PRIMARY KEY,
+    Marca NVARCHAR(50),
+    Modelo NVARCHAR(50),
+    Anio INT,
+    Estado NVARCHAR(20) CHECK (Estado IN ('Activo', 'En mantenimiento', 'Inactivo')),
+    Disponible BIT DEFAULT 1
+);
+GO
+
+-- Vehículos
+INSERT INTO Vehiculos (Marca, Modelo, Anio, Estado, Disponible)
+VALUES
+('Tesla', 'Model 3', 2022, 'Activo', 1),
+('Nissan', 'Leaf', 2021, 'Activo', 1),
+('BMW', 'i3', 2020, 'En mantenimiento', 0),
+('Chevrolet', 'Bolt', 2019, 'Activo', 1),
+('Hyundai', 'Kona EV', 2023, 'Inactivo', 0);
+GO

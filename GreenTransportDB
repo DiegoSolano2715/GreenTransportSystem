@@ -1,0 +1,134 @@
+CREATE DATABASE GreenTransportDB;
+GO
+USE GreenTransportDB;
+GO
+
+-- Tabla de Vehículos
+CREATE TABLE Vehiculos (
+    IdVehiculo INT IDENTITY PRIMARY KEY,
+    Marca NVARCHAR(50),
+    Modelo NVARCHAR(50),
+    Anio INT,
+    Estado NVARCHAR(20) CHECK (Estado IN ('Activo', 'En mantenimiento', 'Inactivo')),
+    Disponible BIT DEFAULT 1
+);
+GO
+
+-- Tabla de Conductores
+CREATE TABLE Conductores (
+    IdConductor INT IDENTITY PRIMARY KEY,
+    Nombre NVARCHAR(100),
+    Licencia NVARCHAR(20),
+    FechaIngreso DATE
+);
+GO
+
+-- Tabla de Mantenimientos
+CREATE TABLE Mantenimientos (
+    IdMantenimiento INT IDENTITY PRIMARY KEY,
+    IdVehiculo INT FOREIGN KEY REFERENCES Vehiculos(IdVehiculo),
+    IdConductor INT FOREIGN KEY REFERENCES Conductores(IdConductor),
+    FechaMantenimiento DATE,
+    Descripcion NVARCHAR(200)
+);
+GO
+
+
+-- Vehículos
+INSERT INTO Vehiculos (Marca, Modelo, Anio, Estado, Disponible)
+VALUES
+('Tesla', 'Model 3', 2022, 'Activo', 1),
+('Nissan', 'Leaf', 2021, 'Activo', 1),
+('BMW', 'i3', 2020, 'En mantenimiento', 0),
+('Chevrolet', 'Bolt', 2019, 'Activo', 1),
+('Hyundai', 'Kona EV', 2023, 'Inactivo', 0);
+GO
+
+-- Conductores
+INSERT INTO Conductores (Nombre, Licencia, FechaIngreso)
+VALUES
+('Carlos Rojas', 'CR12345', '2020-05-12'),
+('Ana Gómez', 'AG67890', '2021-09-10'),
+('Luis Fernández', 'LF54321', '2019-03-02');
+GO
+
+-- Mantenimientos
+INSERT INTO Mantenimientos (IdVehiculo, IdConductor, FechaMantenimiento, Descripcion)
+VALUES
+(1, 1, '2025-09-15', 'Cambio de batería parcial'),
+(2, 2, '2025-10-10', 'Revisión general'),
+(3, 3, '2025-09-20', 'Actualización de software');
+GO
+
+/*a) Listar mantenimientos por conductor*/
+
+SELECT c.Nombre AS Conductor, v.Marca + ' ' + v.Modelo AS Vehiculo, 
+       m.FechaMantenimiento, m.Descripcion
+FROM Mantenimientos m
+JOIN Conductores c ON m.IdConductor = c.IdConductor
+JOIN Vehiculos v ON m.IdVehiculo = v.IdVehiculo
+ORDER BY c.Nombre;
+/*b) Mostrar vehículos sin mantenimiento en el último mes*/
+
+SELECT v.Marca, v.Modelo
+FROM Vehiculos v
+LEFT JOIN Mantenimientos m 
+    ON v.IdVehiculo = m.IdVehiculo
+    AND m.FechaMantenimiento >= DATEADD(MONTH, -1, GETDATE())
+WHERE m.IdMantenimiento IS NULL;
+
+/*a) Comparar vehículos activos vs. en mantenimiento
+Vehículos activos*/
+
+
+SELECT IdVehiculo, Marca, Modelo FROM Vehiculos WHERE Estado = 'Activo';
+
+
+
+SELECT IdVehiculo, Marca, Modelo FROM Vehiculos WHERE Estado = 'En mantenimiento';
+
+
+
+SELECT IdVehiculo, Marca, Modelo FROM Vehiculos WHERE Estado = 'Activo'
+UNION
+SELECT IdVehiculo, Marca, Modelo FROM Vehiculos WHERE Estado = 'En mantenimiento';
+
+
+
+SELECT IdVehiculo, Marca, Modelo FROM Vehiculos WHERE Estado = 'Activo'
+INTERSECT
+SELECT IdVehiculo, Marca, Modelo FROM Vehiculos WHERE Estado = 'En mantenimiento';
+
+
+
+SELECT IdVehiculo, Marca, Modelo FROM Vehiculos WHERE Estado = 'Activo'
+EXCEPT
+SELECT IdVehiculo, Marca, Modelo FROM Vehiculos WHERE Estado = 'En mantenimiento';
+
+/*Registrar un nuevo mantenimiento y actualizar disponibilidad del vehículo:*/
+
+
+BEGIN TRANSACTION;
+
+BEGIN TRY
+    DECLARE @IdVehiculo INT = 2;
+    DECLARE @IdConductor INT = 1;
+
+    -- Registrar mantenimiento
+    INSERT INTO Mantenimientos (IdVehiculo, IdConductor, FechaMantenimiento, Descripcion)
+    VALUES (@IdVehiculo, @IdConductor, GETDATE(), 'Revisión de frenos y sistema eléctrico');
+
+    -- Actualizar estado y disponibilidad
+    UPDATE Vehiculos
+    SET Estado = 'En mantenimiento', Disponible = 0
+    WHERE IdVehiculo = @IdVehiculo;
+
+    COMMIT TRANSACTION;
+    PRINT '✅ Transacción completada exitosamente.';
+END TRY
+
+BEGIN CATCH
+    ROLLBACK TRANSACTION;
+    PRINT '❌ Error en la transacción. Se realizó rollback.';
+    PRINT ERROR_MESSAGE();
+END CATCH;
